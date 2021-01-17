@@ -1,0 +1,10 @@
+{
+	"name" : "Keyboard Battery Status",
+	"description" : "Displays the battery level of the connected Bluetooth wireless keyboard; Currently works for model AnnePro 2", 
+	"shell-version" : [ 
+		"3.36"
+	], 
+	"url" : "",
+	"uuid" : "keyboard-battery-status@twinquist.com",
+	"version" : 1.0
+}
