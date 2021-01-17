@@ -19,8 +19,6 @@ const KeyboardBatteryStatus = new Lang.Class({
 
         //find the keyboard we want to use. 
         this.keyboard = this.findKeyboard();
-        log("finished finding keyboard...");
-
 
         this.kbBatteryStatus = new St.Bin({
             style_class: "panel-button",
@@ -34,7 +32,7 @@ const KeyboardBatteryStatus = new Lang.Class({
     },
 
     _sync: function () {
-        log("syncing battery percentage");
+        log("KEYBOARD-BATTERY-STATUS: syncing battery percentage");
         this.kbBatteryStatusText.text = this.keyboard.model + " " + this.getPercentage(this.keyboard) + "%";
     },
 
@@ -57,7 +55,6 @@ const KeyboardBatteryStatus = new Lang.Class({
     },
 
     getPercentage: function (device) {
-        log("Battery Pecentage is " + device.percentage + "%.");
         var percentage = device.percentage;
         return device.percentage;
     },
