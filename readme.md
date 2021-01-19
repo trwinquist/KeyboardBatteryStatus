@@ -1,5 +1,8 @@
 # Keyboard Battery Status
 GNOME shell extension to display external keyboard battery percentage in the topbar.
+## Installation
+Clone this repository into '~/.local/share/gnome-shell/extensions/'.
+Then restart the GNOME shell by pressing _Alt + F2_ type _r_ and press enter.
 ## Current state
 Currently works with the Anne Pro II keyboard. The extension establishes a DBusProxy to listen to changes in the battery status and updates the percentage upon change. 
 ## Next Steps
