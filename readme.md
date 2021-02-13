@@ -3,8 +3,8 @@ GNOME shell extension to display external keyboard battery percentage in the top
 ## Installation
 Clone this repository into '~/.local/share/gnome-shell/extensions/'.
 Then restart the GNOME shell by pressing _Alt + F2_ type _r_ and press enter.
-## Current state
-Currently compatible with Anne Pro II keyboard. Up to date battery percentage displayed next to device name in top bar.
+## Compatibility
+Currently compatible with Anne Pro II keyboard.
 ## Next Steps
 1. Add functionality to provide notifications upon battery reaching levels that require action. i.e. Battery level critical and should be plugged in.
 2. Show/hide the status upon keyboard connect and disconnect.

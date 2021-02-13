@@ -27,11 +27,9 @@ const KeyboardBatteryStatus = new Lang.Class({
     Extends: PanelMenu.Button,
 
     _init: function () {
-        //eventually create a way to set the variable in prefs.js to choose which wirelesskeyboard battery level to display;
-        this.keyboardModel = "AnnePro";
+        /** currently compatible with AnnePro2, set this.keyboardModel to model to use. */
+        this.keyboardModel = "AnnePro2";
 
-
-        //find the keyboard we want to use. 
         this.keyboard = this._findKeyboard();
 
         this.kbBatteryStatus = new St.Bin({
@@ -45,88 +43,92 @@ const KeyboardBatteryStatus = new Lang.Class({
         this.kbBatteryStatus.set_child(this.kbBatteryStatusText);
 
 
-        /** set up a dbus proxy so we can listen to changes in this.keyboard.percentage and update accordinglingly */
-        log("================================================================\nKEYBOARD BATTERY STATUS\n----------------------------------------------------------------");
-
-        log("creating dbus proxy connection to the keyboard");
-
         this._kbProxy = new DBusProxy(Gio.DBus.system, 'org.freedesktop.UPower', this.keyboard.get_object_path(),
             (proxy, error) => {
-                log("callback");
                 if (error) {
-                    log("uh oh something bad happened in the callback");
-                    log(error.message);
+                    Log("Uh Oh, Something went wrong updating the percentage using the DBusProxy");
+                    Log(error.message);
                     return;
                 }
                 this._kbProxy.connect('g-properties-changed', this._sync.bind(this));
                 this._sync()
             });
-
-        log("================================================================");
-
     },
 
     _sync: function () {
-        log("================================================================\nKEYBOARD BATTERY STATUS\n----------------------------------------------------------------");
-        log("Syncing battery percentage");
+        Log("Syncing battery percentage");
         this.kbBatteryStatusText.set_text( this.keyboard.model + " " + this.keyboard.percentage + "%" );
-        log("Device Power: " + this.keyboard.percentage + "%");
-        log("================================================================\n\n")
-
-
+        Log("Device Power: " + this.keyboard.percentage + "%");
     },
 
-    /** find the keyboard specified by model */
+    /** find the keyboard specified by model 
+     *  next steps will include methods to find any keyboard, and choose which once to use. 
+    */
     _findKeyboard: function () {
-        log("================================================================\nKEYBOARD BATTERY STATUS\n----------------------------------------------------------------");
-        log("Looking for Keyboard...");
+
+        Log("Looking for Keyboard...");
         var client = UPower.Client.new_full(null);
+         var devices = client.get_devices();
 
-
-        var devices = client.get_devices();
         for (let device of devices) {
             //log("Device: " + device.to_text());
             if (device.model.includes(this.keyboardModel)) {
-                log("Found keyboard: " + device.model + ".");
-                log("Device Power: " + device.percentage + "%");
-                log("================================================================\n\n")
+                Log("Found the following keyboard,");
+                Log("Keyboard Model: " + device.model + ".");
+                Log("Device Power: " + device.percentage + "%");
                 return device;
             }
         }
-        log("No Keyboards found");
+        Log("No Keyboards found");
         return null;
     },
+    
+    /** show/hide the topbar button upon keyboard connect and disconnect repectively */
+    _keyboardConnection : function() {
+        /** create a proxy connection to listen to UPower devices */
+        this.connectionsProxy = new DBusProxy(Gio.DBus.system, 'org.freedesktop.UPower', 
+            (proxy,error)=>{
+            Log('Connection Listener')
+                if (error) {
+                    Log("Something happened when creating the proxy to listen for the Keyboard connections: ");
+                    Log(error.message);
+                }
+        });
+        this.connections = this.connectionsProxy.get_connection();
+        this.deviceAdded = this.connections.signal_subscribe('org.freedesktop.UPower','org.freedesktop.UPower','DeviceAdded',null, null,0,() => {
+            Log('Keyboard Connected')
+            this.keyboard = this._findKeyboard();
+            // create new connection to the keyboard.
+        });
 
-    // /** Get Battery Percentage */
-    // _getPercentage: function (device) {
-    //     return device.percentage;
+        this.deviceRemoved = this.connections.sign_subscribe('org.freedesktop.UPower', 'org.freedesktop.UPower', 'DeviceRemoved', null, null, 0 ()=> {
+            var currentKeyboard = this._findKeyboard();
+            Log('A device has been removed...');
+            if(currentKeyboard === null){
+                Log("Current Keyboard has been disconnected");
+                this.keyboard  = null;
+                this._proxy = null;
+                this.actor.hide();
+            } else {
+                Log("a different device has been disconnected, carry on!");
+            }
+        }
+
+    },
+
+    // Log : function (str) {
+    //     log("[KeyboardBatteryStatus] " + str);
     // },
-
-    // /** get the Model of the device */
-    // _getModel: function (device) {
-    //     return device.model;
-    // },
-
-    // /** Listen for changes to the battery percentage*/
-    // _batteryListener: function () {
-
-    // },
-
-    // /** Listen for changes to battery charging status */
-    // _chargingListener: function () {
-
-    // },
-
 
 })
-
+function Log(str) {
+    log("[KeyboardBatteryStatus] " + str);
+}
 
 function init() {
 }
 
 function enable() {
-    log("enabling keyboard battery status");
-
     try {
         keybBatteryStatus = new KeyboardBatteryStatus();
         Main.panel._rightBox.insert_child_at_index(keybBatteryStatus.kbBatteryStatus, 1);
@@ -137,11 +139,10 @@ function enable() {
 }
 
 function disable() {
-    log("disabling keyboard battery status");
     try {
         Main.panel._rightBox.remove_child(keybBatteryStatus.kbBatteryStatus);
     } catch (err) {
         log("Uh Oh something went wrong disabling the extension");
+        log()
     }
-
 }
